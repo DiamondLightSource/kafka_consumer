@@ -1,33 +1,60 @@
-class HelloClass:
-    """A class who's only purpose in life is to say hello"""
+import sys
+import time
 
-    def __init__(self, name: str):
-        """
-        Args:
-            name: The initial value of the name of the person who gets greeted
-        """
-        #: The name of the person who gets greeted
-        self.name = name
+from confluent_kafka import Consumer, KafkaException
 
-    def format_greeting(self) -> str:
-        """Return a greeting for `name`
-
-        >>> HelloClass("me").format_greeting()
-        'Hello me'
-        """
-        greeting = f"Hello {self.name}"
-        return greeting
+from kafka_consumer.h5_file import H5File
 
 
-def say_hello_lots(hello: HelloClass = None, times=5):
-    """Print lots of greetings using the given `HelloClass`
+def consume_and_write(broker, group, topics, filepath, filename, num_arrays):
+    """Simple kafka consumer
 
     Args:
-        hello: A `HelloClass` that `format_greeting` will be called on.
-            If not given, use a HelloClass with name="me"
-        times: The number of times to call it
+        broker: Desc
+        group: Desc
+        topics: Desc
     """
-    if hello is None:
-        hello = HelloClass("me")
-    for _ in range(times):
-        print(hello.format_greeting())
+
+    def print_assignment(consumer, partitions):
+        print("Assignment:", partitions)
+
+    # Consumer configuration
+    # See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+    conf = {
+        "bootstrap.servers": broker,
+        "group.id": group,
+        "session.timeout.ms": 6000,
+        "auto.offset.reset": "latest",
+    }
+    c = Consumer(conf)
+    c.subscribe([topics], on_assign=print_assignment)
+
+    h5file = H5File()
+    h5file.create(filepath, filename, num_arrays)
+    num_msgs_consumed = 0
+
+    try:
+        while num_msgs_consumed < num_arrays:
+            msg = c.poll(timeout=1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                raise KafkaException(msg.error())
+            else:
+                # Proper message
+                num_msgs_consumed += 1
+                print(
+                    f"Topic: {msg.topic()} "
+                    f"Partition: [{msg.partition()}] "
+                    f"Offset: {msg.offset()} "
+                    f"Key: {msg.key()} "
+                    f"Time: {time.time()}"
+                )
+                h5file.add_array_from_flatbuffer(msg.value())
+
+    except KeyboardInterrupt:
+        sys.stderr.write("%% Aborted by user\n")
+
+    finally:
+        # Close down consumer to commit final offsets.
+        c.close()
