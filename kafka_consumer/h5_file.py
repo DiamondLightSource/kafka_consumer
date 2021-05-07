@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import time
 
 from h5py import File
 
@@ -62,10 +63,10 @@ class H5File:
         self.f.create_group(DET_ATTR_PATH)
 
         # Create instrument NDAttribute datasets
-        self.f[DET_ATTR_PATH].create_dataset(EPICS_TS_SEC, (num_arrays,))
-        self.f[DET_ATTR_PATH].create_dataset(EPICS_TS_NSEC, (num_arrays,))
-        self.f[DET_ATTR_PATH].create_dataset(ID, (num_arrays,), dtype="u4")
-        self.f[DET_ATTR_PATH].create_dataset(TIMESTAMP, (num_arrays,))
+        self.f[INST_ATTR_PATH].create_dataset(EPICS_TS_SEC, (num_arrays,))
+        self.f[INST_ATTR_PATH].create_dataset(EPICS_TS_NSEC, (num_arrays,))
+        self.f[INST_ATTR_PATH].create_dataset(ID, (num_arrays,), dtype="u4")
+        self.f[INST_ATTR_PATH].create_dataset(TIMESTAMP, (num_arrays,))
 
         self.num_arrays = num_arrays
         self.array_index = 0
@@ -77,17 +78,22 @@ class H5File:
         array = NDArray.GetRootAs(array_buf, 0)
 
         if self.array_index == 0:
-            self._handle_first_array(array)
+            self._create_data_dataset(array)
+            self._create_ndattr_datasets(array)
         else:
             self._check_array(array)
 
+        tic = time()
         self.data[:, :, self.array_index] = (
             array.PDataAsNumpy().view(self.data_dtype).reshape(array.DimsAsNumpy())
         )
-        self._add_attributes(array)
+        toc = time()
+        print(f"Time appending dataset: {toc-tic}")
+        self._append_instrument_attributes(array)
+        self._append_detector_attributes(array)
         self.array_index += 1
 
-    def _handle_first_array(self, array):
+    def _create_data_dataset(self, array):
         # Get the array dimensions and create the 'data' dataset
         self.data_dims = array.DimsAsNumpy()
         self.data_dtype = datatype_conversion.get(array.DataType())
@@ -110,12 +116,37 @@ class H5File:
                 )
             )
 
-    def _add_attributes(self, array):
-        self.f[f"{DET_ATTR_PATH}/{EPICS_TS_SEC}"][
+    def _append_instrument_attributes(self, array):
+        self.f[f"{INST_ATTR_PATH}/{EPICS_TS_SEC}"][
             self.array_index
         ] = array.EpicsTS().SecPastEpoch()
-        self.f[f"{DET_ATTR_PATH}/{EPICS_TS_NSEC}"][
+        self.f[f"{INST_ATTR_PATH}/{EPICS_TS_NSEC}"][
             self.array_index
         ] = array.EpicsTS().Nsec()
-        self.f[f"{DET_ATTR_PATH}/{ID}"][self.array_index] = array.Id()
-        self.f[f"{DET_ATTR_PATH}/{TIMESTAMP}"][self.array_index] = array.TimeStamp()
+        self.f[f"{INST_ATTR_PATH}/{ID}"][self.array_index] = array.Id()
+        self.f[f"{INST_ATTR_PATH}/{TIMESTAMP}"][self.array_index] = array.TimeStamp()
+
+    def _attach_NDAttr_attrs(self, attr, group):
+        group.attrs.create("NDAttrDescription", data=attr.PDescription())
+        group.attrs.create("NDAttrName", data=attr.PName())
+        group.attrs.create("NDAttrSource", data=attr.PSource())
+        group.attrs.create("NDAttrSourceType", data="Unknown")
+
+    def _append_detector_attributes(self, array):
+        for idx in range(array.PAttributeListLength()):
+            attr = array.PAttributeList(idx)
+            print(f"Attr array is {attr.PDataAsNumpy()}")
+            self.f[f"{DET_ATTR_PATH}/{attr.PName().decode()}"][
+                self.array_index
+            ] = attr.PDataAsNumpy().view(datatype_conversion.get(attr.DataType()))
+
+    def _create_ndattr_datasets(self, array):
+        for idx in range(array.PAttributeListLength()):
+            attr = array.PAttributeList(idx)
+            self.f[DET_ATTR_PATH].create_dataset(
+                f"{attr.PName().decode()}",
+                shape=(self.num_arrays,),
+            )
+            self._attach_NDAttr_attrs(
+                attr, self.f[f"{DET_ATTR_PATH}/{attr.PName().decode()}"]
+            )
