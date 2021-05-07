@@ -16,5 +16,5 @@ def main(args=None):
         args.topic,
         "/dls/science/users/wqt58532/kafka_consumer",
         "test_consume.h5",
-        200,
+        50,
     )
