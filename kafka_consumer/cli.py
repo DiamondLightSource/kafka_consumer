@@ -25,6 +25,9 @@ def main(args=None):
         help="Offsets to start consuming from - must be one for each partition",
         required=False,
     )
+    parser.add_argument(
+        "-i", "--array_id", type=int, help="ID of first array to write", required=False
+    )
     args = parser.parse_args(args)
     kafka_consumer = KafkaConsumer(args.broker, args.group, args.topic)
     kafka_consumer.consume_and_write(
@@ -33,4 +36,5 @@ def main(args=None):
         50,
         start_offsets=args.offsets,
         secs_since_epoch=args.timestamp,
+        first_array_id=args.array_id,
     )

@@ -54,7 +54,7 @@ class H5File:
     def __init__(self):
         pass
 
-    def create(self, filepath, filename, num_arrays):
+    def create(self, filepath, filename, num_arrays, first_array_id=None):
         self.f = File(Path(filepath) / filename, "w")
         self.f.create_group(DATA_LINK_PATH)
         self.f.create_group(INST_PATH)
@@ -70,19 +70,44 @@ class H5File:
 
         self.num_arrays = num_arrays
         self.array_index = 0
+        self.array_count = 0
         self.data_dtype = None
         self.data_dims = None
+
+        if first_array_id:
+            self.array_offset = first_array_id
+        else:
+            self.array_offset = None
 
     def add_array_from_flatbuffer(self, flatbuffer_array):
         array_buf = bytearray(flatbuffer_array)
         array = NDArray.GetRootAs(array_buf, 0)
 
-        if self.array_index == 0:
-            self._create_data_dataset(array)
-            self._create_ndattr_datasets(array)
-        else:
-            self._check_array(array)
+        if self._check_array_id_and_increment_index(array):
+            if self.array_count == 0:
+                self._create_data_dataset(array)
+                self._create_ndattr_datasets(array)
+            else:
+                self._check_array(array)
 
+            self._append_array(array)
+            self._append_instrument_attributes(array)
+            self._append_detector_attributes(array)
+            print(f"Array count is {self.array_count}")
+            self.array_count += 1
+
+    def _check_array_id_and_increment_index(self, array):
+        if self.array_offset:
+            if self.array_offset <= array.Id() < self.array_offset + self.num_arrays:
+                self.array_index = array.Id() - self.array_offset
+            else:
+                print(f"Dropping ID: {array.Id()} as outside range")
+                return False
+        else:
+            self.array_index = self.array_count
+        return True
+
+    def _append_array(self, array):
         tic = time()
         print(f"Unique ID is {array.Id()} and array index is {self.array_index}")
         self.data[:, :, self.array_index] = (
@@ -90,9 +115,6 @@ class H5File:
         )
         toc = time()
         print(f"Time appending dataset: {toc-tic}")
-        self._append_instrument_attributes(array)
-        self._append_detector_attributes(array)
-        self.array_index += 1
 
     def _create_data_dataset(self, array):
         # Get the array dimensions and create the 'data' dataset

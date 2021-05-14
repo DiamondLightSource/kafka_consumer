@@ -34,7 +34,13 @@ class KafkaConsumer:
         return offsets
 
     def consume_and_write(
-        self, filepath, filename, num_arrays, start_offsets=None, secs_since_epoch=None
+        self,
+        filepath,
+        filename,
+        num_arrays,
+        start_offsets=None,
+        secs_since_epoch=None,
+        first_array_id=None,
     ):
         """Simple kafka consumer
 
@@ -73,11 +79,10 @@ class KafkaConsumer:
         c.assign(topic_partition_start_offsets)
 
         h5file = H5File()
-        h5file.create(filepath, filename, num_arrays)
-        num_msgs_consumed = 0
+        h5file.create(filepath, filename, num_arrays, first_array_id)
 
         try:
-            while num_msgs_consumed < num_arrays:
+            while h5file.array_count < num_arrays:
                 msg = c.poll(timeout=1.0)
                 if msg is None:
                     continue
@@ -85,7 +90,6 @@ class KafkaConsumer:
                     raise KafkaException(msg.error())
                 else:
                     # Proper message
-                    num_msgs_consumed += 1
                     print(
                         f"Topic: {msg.topic()} "
                         f"Partition: [{msg.partition()}] "
