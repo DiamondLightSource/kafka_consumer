@@ -84,6 +84,7 @@ class H5File:
             self._check_array(array)
 
         tic = time()
+        print(f"Unique ID is {array.Id()} and array index is {self.array_index}")
         self.data[:, :, self.array_index] = (
             array.PDataAsNumpy().view(self.data_dtype).reshape(array.DimsAsNumpy())
         )
@@ -135,7 +136,6 @@ class H5File:
     def _append_detector_attributes(self, array):
         for idx in range(array.PAttributeListLength()):
             attr = array.PAttributeList(idx)
-            print(f"Attr array is {attr.PDataAsNumpy()}")
             self.f[f"{DET_ATTR_PATH}/{attr.PName().decode()}"][
                 self.array_index
             ] = attr.PDataAsNumpy().view(datatype_conversion.get(attr.DataType()))

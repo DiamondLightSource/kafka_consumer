@@ -60,11 +60,16 @@ class KafkaConsumer:
             topic_partition_start_offsets = self._offsets_after_time(
                 c, secs_since_epoch
             )
-        else:
+        elif start_offsets:
             topic_partition_start_offsets = [
                 TopicPartition(self.topic, p, o) for p, o in enumerate(start_offsets)
             ]
+        else:
+            topic_partition_start_offsets = [
+                TopicPartition(self.topic, p, 0) for p in range(self.num_partitions)
+            ]
 
+        print(f"Assigning to {topic_partition_start_offsets}")
         c.assign(topic_partition_start_offsets)
 
         h5file = H5File()
