@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
-from time import time
 
-from kafka_consumer import __version__, consume_and_write
+from kafka_consumer import KafkaConsumer, __version__
 
 
 def main(args=None):
@@ -10,21 +9,28 @@ def main(args=None):
     parser.add_argument("broker", type=str, help="Broker")
     parser.add_argument("group", type=str, help="Group")
     parser.add_argument("topic", type=str, help="Topic")
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "-t",
         "--timestamp",
         type=int,
         help="Timestamp as secs since epoch to start consuming from",
         required=False,
-        default=time(),
+    )
+    group.add_argument(
+        "-o",
+        "--offsets",
+        type=int,
+        nargs="+",
+        help="Offsets to start consuming from - must be one for each partition",
+        required=False,
     )
     args = parser.parse_args(args)
-    consume_and_write(
-        args.broker,
-        args.group,
-        args.topic,
+    kafka_consumer = KafkaConsumer(args.broker, args.group, args.topic)
+    kafka_consumer.consume_and_write(
         "/dls/science/users/wqt58532/kafka_consumer",
         "test_consume.h5",
         50,
-        args.timestamp,
+        start_offsets=args.offsets,
+        secs_since_epoch=args.timestamp,
     )
