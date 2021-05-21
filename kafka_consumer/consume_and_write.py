@@ -92,6 +92,10 @@ class KafkaConsumer:
                 TopicPartition(self.topic, p, 0) for p in range(self.num_partitions)
             ]
 
+        for tp in topic_partition_start_offsets:
+            if tp.error:
+                raise KafkaException(tp.error)
+
         if not first_array_id:
             first_array_id = self._first_array_id_from_offsets(
                 c, topic_partition_start_offsets
