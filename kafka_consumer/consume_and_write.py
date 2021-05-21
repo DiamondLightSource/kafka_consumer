@@ -5,6 +5,7 @@ from confluent_kafka import Consumer, KafkaException, TopicPartition
 
 from kafka_consumer.h5_file import H5File
 from kafka_consumer.kafka_admin import get_topic_metadata
+from kafka_consumer.utils import array_from_flatbuffer
 
 
 class KafkaConsumer:
@@ -32,6 +33,22 @@ class KafkaConsumer:
         ]
         offsets = consumer.offsets_for_times(topic_partions_to_search, timeout=1.0)
         return offsets
+
+    def _first_array_id_from_offsets(self, consumer, topic_partition_offsets):
+        min_array_id = None
+        for topic_partition_offset in topic_partition_offsets:
+            consumer.assign([topic_partition_offset])
+            if topic_partition_offset.offset == -1:
+                # No msgs after this timestamp for this offset
+                break
+            msg = consumer.consume()[0]
+            array_id = array_from_flatbuffer(msg.value()).Id()
+            if not min_array_id:
+                min_array_id = array_id
+            else:
+                min_array_id = min(min_array_id, array_id)
+            consumer.unassign()
+        return min_array_id
 
     def consume_and_write(
         self,
@@ -74,6 +91,11 @@ class KafkaConsumer:
             topic_partition_start_offsets = [
                 TopicPartition(self.topic, p, 0) for p in range(self.num_partitions)
             ]
+
+        if not first_array_id:
+            first_array_id = self._first_array_id_from_offsets(
+                c, topic_partition_start_offsets
+            )
 
         print(f"Assigning to {topic_partition_start_offsets}")
         c.assign(topic_partition_start_offsets)

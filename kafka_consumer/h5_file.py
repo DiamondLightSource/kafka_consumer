@@ -3,8 +3,7 @@ from time import time
 
 from h5py import File
 
-from kafka_consumer.FB_Tables.NDArray import NDArray
-from kafka_consumer.utils import datatype_conversion
+from kafka_consumer.utils import array_from_flatbuffer, datatype_conversion
 
 DATA_PATH = "entry/instrument/detector/data"
 DATA_LINK_PATH = "entry/data"
@@ -80,8 +79,7 @@ class H5File:
             self.array_offset = None
 
     def add_array_from_flatbuffer(self, flatbuffer_array):
-        array_buf = bytearray(flatbuffer_array)
-        array = NDArray.GetRootAs(array_buf, 0)
+        array = array_from_flatbuffer(flatbuffer_array)
 
         if self._check_array_id_and_increment_index(array):
             if self.array_count == 0:
@@ -108,6 +106,8 @@ class H5File:
         return True
 
     def _append_array(self, array):
+        self._extend_dataset()
+        print(f"dset size is: {self.data.shape}")
         tic = time()
         print(f"Unique ID is {array.Id()} and array index is {self.array_index}")
         self.data[:, :, self.array_index] = (
@@ -116,14 +116,25 @@ class H5File:
         toc = time()
         print(f"Time appending dataset: {toc-tic}")
 
+    def _extend_dataset(self):
+        if self.array_index+1 > self.data.shape[2]:
+            tic = time()
+            self.data.resize(self.array_index+1, axis=2)
+            toc = time()
+            print(f"Time take to extend: {toc - tic}")
+        else:
+            print("Resize not required")
+
     def _create_data_dataset(self, array):
         # Get the array dimensions and create the 'data' dataset
         self.data_dims = array.DimsAsNumpy()
         self.data_dtype = datatype_conversion.get(array.DataType())
         self.data = self.f[DATA_PATH].create_dataset(
             "data",
-            tuple(self.data_dims.tolist()) + (self.num_arrays,),
+            tuple(self.data_dims.tolist()) + (1,),
             dtype=self.data_dtype,
+            maxshape=tuple(self.data_dims.tolist()) + (self.num_arrays,),
+            chunks=tuple(self.data_dims.tolist()) + (1,)
         )
         # create the hardlink
         self.f[f"{DATA_LINK_PATH}/data"] = self.data
