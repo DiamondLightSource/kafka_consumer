@@ -21,6 +21,7 @@ sphinx-multiversion = {editable = true,git = "https://github.com/dls-controls/sp
 # Required because this pytest dependency gets incorrect marker by default
 typing-extensions = {version = ">=3.7.4.3", markers="python_version >= '3.7'" }
 flake8 = "*"
+pytest-mock = "*"
 
 [packages]
 # All other package requirements from setup.cfg
@@ -28,6 +29,7 @@ kafka_consumer = {editable = true,path = "."}
 h5py = "*"
 confluent-kafka = "*"
 flatbuffers = "*"
+importlib-metadata = "==1.7.0"
 
 [scripts]
 # Put coverage here so we don't interfere with debugging in the IDE
