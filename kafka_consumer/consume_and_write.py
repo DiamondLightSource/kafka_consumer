@@ -129,5 +129,6 @@ class KafkaConsumer:
             sys.stderr.write("%% Aborted by user\n")
 
         finally:
+            print(f"Total write time was {h5file.total_write_time}")
             # Close down consumer to commit final offsets.
             c.close()

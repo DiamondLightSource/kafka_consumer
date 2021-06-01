@@ -51,10 +51,10 @@ class MismatchedDataype(Exception):
 
 class H5File:
     def __init__(self):
-        pass
+        self.total_write_time = 0
 
     def create(self, filepath, filename, num_arrays, first_array_id=None):
-        self.f = File(Path(filepath) / filename, "w")
+        self.f = File(Path(filepath) / filename, "w", libver="latest")
         self.f.create_group(DATA_LINK_PATH)
         self.f.create_group(INST_PATH)
         self.f.create_group(INST_ATTR_PATH)
@@ -110,16 +110,18 @@ class H5File:
         print(f"dset size is: {self.data.shape}")
         tic = time()
         print(f"Unique ID is {array.Id()} and array index is {self.array_index}")
-        self.data[:, :, self.array_index] = (
+        arr_data = (
             array.PDataAsNumpy().view(self.data_dtype).reshape(array.DimsAsNumpy())
         )
+        self.data.id.write_direct_chunk((0, 0, self.array_index), arr_data.tobytes())
         toc = time()
         print(f"Time appending dataset: {toc-tic}")
+        self.total_write_time += toc - tic
 
     def _extend_dataset(self):
-        if self.array_index+1 > self.data.shape[2]:
+        if self.array_index + 1 > self.data.shape[2]:
             tic = time()
-            self.data.resize(self.array_index+1, axis=2)
+            self.data.resize(self.array_index + 1, axis=2)
             toc = time()
             print(f"Time take to extend: {toc - tic}")
         else:
@@ -134,7 +136,7 @@ class H5File:
             tuple(self.data_dims.tolist()) + (1,),
             dtype=self.data_dtype,
             maxshape=tuple(self.data_dims.tolist()) + (self.num_arrays,),
-            chunks=tuple(self.data_dims.tolist()) + (1,)
+            chunks=tuple(self.data_dims.tolist()) + (1,),
         )
         # create the hardlink
         self.f[f"{DATA_LINK_PATH}/data"] = self.data
@@ -177,8 +179,7 @@ class H5File:
         for idx in range(array.PAttributeListLength()):
             attr = array.PAttributeList(idx)
             self.f[DET_ATTR_PATH].create_dataset(
-                f"{attr.PName().decode()}",
-                shape=(self.num_arrays,),
+                f"{attr.PName().decode()}", shape=(self.num_arrays,),
             )
             self._attach_NDAttr_attrs(
                 attr, self.f[f"{DET_ATTR_PATH}/{attr.PName().decode()}"]
