@@ -73,7 +73,7 @@ class H5File:
         self.data_dtype = None
         self.data_dims = None
 
-        if first_array_id:
+        if first_array_id is not None:
             self.array_offset = first_array_id
         else:
             self.array_offset = None
@@ -95,7 +95,7 @@ class H5File:
             self.array_count += 1
 
     def _check_array_id_and_increment_index(self, array):
-        if self.array_offset:
+        if self.array_offset is not None:
             if self.array_offset <= array.Id() < self.array_offset + self.num_arrays:
                 self.array_index = array.Id() - self.array_offset
             else:
