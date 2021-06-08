@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 
 from kafka_consumer import KafkaConsumer, __version__
 
+import cProfile
+import pstats
 
 def main(args=None):
     parser = ArgumentParser()
@@ -33,8 +35,19 @@ def main(args=None):
     kafka_consumer.consume_and_write(
         "/dls/science/users/wqt58532/kafka_consumer",
         "test_consume.h5",
-        50,
+        100,
         start_offsets=args.offsets,
         secs_since_epoch=args.timestamp,
         first_array_id=args.array_id,
     )
+
+
+if __name__ == "__main__":
+    prof = cProfile.Profile()
+    prof.run('main()')
+    prof.dump_stats('output.prof')
+
+    stream = open('output.txt', 'w')
+    stats = pstats.Stats('output.prof', stream=stream)
+    stats.sort_stats('cumtime')
+    stats.print_stats()
