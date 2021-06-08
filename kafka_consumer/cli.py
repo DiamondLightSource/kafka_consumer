@@ -1,9 +1,9 @@
+import cProfile
+import pstats
 from argparse import ArgumentParser
 
 from kafka_consumer import KafkaConsumer, __version__
 
-import cProfile
-import pstats
 
 def main(args=None):
     parser = ArgumentParser()
@@ -44,10 +44,10 @@ def main(args=None):
 
 if __name__ == "__main__":
     prof = cProfile.Profile()
-    prof.run('main()')
-    prof.dump_stats('output.prof')
+    prof.run("main()")
+    prof.dump_stats("output.prof")
 
-    stream = open('output.txt', 'w')
-    stats = pstats.Stats('output.prof', stream=stream)
-    stats.sort_stats('cumtime')
+    stream = open("output.txt", "w")
+    stats = pstats.Stats("output.prof", stream=stream)
+    stats.sort_stats("cumtime")
     stats.print_stats()
