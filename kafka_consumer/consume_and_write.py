@@ -123,7 +123,11 @@ class KafkaConsumer:
                         f"Key: {msg.key()} "
                         f"Time: {time()}"
                     )
-                    h5file.add_array_from_flatbuffer(msg.value())
+                    valid_array = h5file.add_array_from_flatbuffer(msg.value())
+                    if not valid_array:
+                        c.incremental_unassign(
+                            [TopicPartition(self.topic, msg.partition())]
+                        )
 
         except KeyboardInterrupt:
             sys.stderr.write("%% Aborted by user\n")

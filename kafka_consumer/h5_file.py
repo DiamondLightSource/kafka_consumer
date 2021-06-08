@@ -64,7 +64,8 @@ class H5File:
     def add_array_from_flatbuffer(self, flatbuffer_array):
         array = array_from_flatbuffer(flatbuffer_array)
 
-        if self._check_array_id_and_increment_index(array):
+        is_valid = self._check_array_id_and_increment_index(array)
+        if is_valid:
             if self.array_count == 0:
                 self._create_data_dataset(array)
             else:
@@ -73,6 +74,7 @@ class H5File:
             self._append_array(array)
             print(f"Array count is {self.array_count}")
             self.array_count += 1
+        return is_valid
 
     def _check_array_id_and_increment_index(self, array):
         if self.array_offset is not None:
