@@ -7,14 +7,6 @@ from kafka_consumer.utils import array_from_flatbuffer, datatype_conversion
 
 DATA_PATH = "entry/instrument/detector/data"
 DATA_LINK_PATH = "entry/data"
-INST_PATH = "entry/instrument"
-DET_ATTR_PATH = "entry/instrument/detector/NDAttributes"
-INST_ATTR_PATH = "entry/instrument/NDAttributes"
-
-EPICS_TS_SEC = "NDArrayEpicsTSSec"
-EPICS_TS_NSEC = "NDArrayEpicsTSnSec"
-ID = "NDArrayUniqueId"
-TIMESTAMP = "NDArrayTimeStamp"
 
 
 class MismatchedDimensions(Exception):
@@ -56,16 +48,7 @@ class H5File:
     def create(self, filepath, filename, num_arrays, first_array_id=None):
         self.f = File(Path(filepath) / filename, "w", libver="latest")
         self.f.create_group(DATA_LINK_PATH)
-        self.f.create_group(INST_PATH)
-        self.f.create_group(INST_ATTR_PATH)
         self.f.create_group(DATA_PATH)
-        self.f.create_group(DET_ATTR_PATH)
-
-        # Create instrument NDAttribute datasets
-        self.f[INST_ATTR_PATH].create_dataset(EPICS_TS_SEC, (num_arrays,))
-        self.f[INST_ATTR_PATH].create_dataset(EPICS_TS_NSEC, (num_arrays,))
-        self.f[INST_ATTR_PATH].create_dataset(ID, (num_arrays,), dtype="u4")
-        self.f[INST_ATTR_PATH].create_dataset(TIMESTAMP, (num_arrays,))
 
         self.num_arrays = num_arrays
         self.array_index = 0
@@ -84,13 +67,10 @@ class H5File:
         if self._check_array_id_and_increment_index(array):
             if self.array_count == 0:
                 self._create_data_dataset(array)
-                self._create_ndattr_datasets(array)
             else:
                 self._check_array(array)
 
             self._append_array(array)
-            self._append_instrument_attributes(array)
-            self._append_detector_attributes(array)
             print(f"Array count is {self.array_count}")
             self.array_count += 1
 
@@ -150,37 +130,4 @@ class H5File:
                 MismatchedDataype(
                     self.data_dtype, datatype_conversion.get(array.DataType())
                 )
-            )
-
-    def _append_instrument_attributes(self, array):
-        self.f[f"{INST_ATTR_PATH}/{EPICS_TS_SEC}"][
-            self.array_index
-        ] = array.EpicsTS().SecPastEpoch()
-        self.f[f"{INST_ATTR_PATH}/{EPICS_TS_NSEC}"][
-            self.array_index
-        ] = array.EpicsTS().Nsec()
-        self.f[f"{INST_ATTR_PATH}/{ID}"][self.array_index] = array.Id()
-        self.f[f"{INST_ATTR_PATH}/{TIMESTAMP}"][self.array_index] = array.TimeStamp()
-
-    def _attach_NDAttr_attrs(self, attr, group):
-        group.attrs.create("NDAttrDescription", data=attr.PDescription())
-        group.attrs.create("NDAttrName", data=attr.PName())
-        group.attrs.create("NDAttrSource", data=attr.PSource())
-        group.attrs.create("NDAttrSourceType", data="Unknown")
-
-    def _append_detector_attributes(self, array):
-        for idx in range(array.PAttributeListLength()):
-            attr = array.PAttributeList(idx)
-            self.f[f"{DET_ATTR_PATH}/{attr.PName().decode()}"][
-                self.array_index
-            ] = attr.PDataAsNumpy().view(datatype_conversion.get(attr.DataType()))
-
-    def _create_ndattr_datasets(self, array):
-        for idx in range(array.PAttributeListLength()):
-            attr = array.PAttributeList(idx)
-            self.f[DET_ATTR_PATH].create_dataset(
-                f"{attr.PName().decode()}", shape=(self.num_arrays,),
-            )
-            self._attach_NDAttr_attrs(
-                attr, self.f[f"{DET_ATTR_PATH}/{attr.PName().decode()}"]
             )
