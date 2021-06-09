@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from time import time
 from typing import Optional
@@ -8,6 +9,8 @@ from kafka_consumer.utils import array_from_flatbuffer, datatype_conversion
 
 DATA_PATH = "entry/instrument/detector/data"
 DATA_LINK_PATH = "entry/data"
+
+log = logging.getLogger(__name__)
 
 
 class MismatchedDimensions(Exception):
@@ -96,8 +99,13 @@ class H5File:
     def _check_array_id_and_increment_index(self, array):
         if self.array_offset is not None:
             if self.array_offset <= array.Id() < self.array_offset + self.num_arrays:
+                log.debug(f"Received array with valid ID: {array.Id()}")
                 self.array_index = array.Id() - self.array_offset
             else:
+                log.debug(
+                    f"Dropping array - Array ID: {array.Id()} outside provided range: "
+                    f"{self.array_offset} - {self.array_offset + self.num_arrays -1}"
+                )
                 return False
         else:
             self.array_index = self.array_count

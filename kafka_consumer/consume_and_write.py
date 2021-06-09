@@ -1,6 +1,6 @@
+import logging
 import sys
 from pathlib import Path
-from time import time
 from typing import List, Optional
 
 from confluent_kafka import Consumer, KafkaException, TopicPartition
@@ -8,6 +8,8 @@ from confluent_kafka import Consumer, KafkaException, TopicPartition
 from kafka_consumer.h5_file import H5File
 from kafka_consumer.kafka_admin import get_topic_metadata
 from kafka_consumer.utils import array_from_flatbuffer
+
+log = logging.getLogger(__name__)
 
 
 class KafkaConsumer:
@@ -115,7 +117,9 @@ class KafkaConsumer:
                 c, topic_partition_start_offsets
             )
 
-        print(f"Assigning to {topic_partition_start_offsets}")
+        log.info(
+            f"Set consumer partition assignment to {topic_partition_start_offsets}"
+        )
         c.assign(topic_partition_start_offsets)
 
         h5file = H5File()
@@ -130,15 +134,15 @@ class KafkaConsumer:
                     raise KafkaException(msg.error())
                 else:
                     # Proper message
-                    print(
+                    log.debug(
                         f"Topic: {msg.topic()} "
                         f"Partition: [{msg.partition()}] "
                         f"Offset: {msg.offset()} "
-                        f"Key: {msg.key()} "
-                        f"Time: {time()}"
+                        f"Key: {msg.key()}"
                     )
                     valid_array = h5file.add_array_from_flatbuffer(msg.value())
                     if not valid_array:
+                        log.debug(f"Unassigning partition id {msg.partition()}")
                         c.incremental_unassign(
                             [TopicPartition(self.topic, msg.partition())]
                         )
@@ -147,6 +151,6 @@ class KafkaConsumer:
             sys.stderr.write("%% Aborted by user\n")
 
         finally:
-            print(f"Total write time was {h5file.total_write_time}")
+            log.info(f"Total write time was {h5file.total_write_time}")
             # Close down consumer to commit final offsets.
             c.close()

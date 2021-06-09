@@ -1,4 +1,5 @@
 import cProfile
+import logging
 import pstats
 from argparse import ArgumentParser
 
@@ -30,7 +31,16 @@ def main(args=None):
     parser.add_argument(
         "-i", "--array_id", type=int, help="ID of first array to write", required=False
     )
+    parser.add_argument(
+        "--log_level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="WARNING",
+        type=str,
+        help="Log level",
+    )
+
     args = parser.parse_args(args)
+    logging.basicConfig(level=getattr(logging, args.log_level.upper()))
     kafka_consumer = KafkaConsumer(args.broker, args.group, args.topic)
     kafka_consumer.consume_and_write(
         "/dls/science/users/wqt58532/kafka_consumer",
