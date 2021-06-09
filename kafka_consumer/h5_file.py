@@ -72,7 +72,6 @@ class H5File:
                 self._check_array(array)
 
             self._append_array(array)
-            print(f"Array count is {self.array_count}")
             self.array_count += 1
         return is_valid
 
@@ -81,7 +80,6 @@ class H5File:
             if self.array_offset <= array.Id() < self.array_offset + self.num_arrays:
                 self.array_index = array.Id() - self.array_offset
             else:
-                print(f"Dropping ID: {array.Id()} as outside range")
                 return False
         else:
             self.array_index = self.array_count
@@ -89,25 +87,17 @@ class H5File:
 
     def _append_array(self, array):
         self._extend_dataset()
-        print(f"dset size is: {self.data.shape}")
         tic = time()
-        print(f"Unique ID is {array.Id()} and array index is {self.array_index}")
         arr_data = (
             array.PDataAsNumpy().view(self.data_dtype).reshape(array.DimsAsNumpy())
         )
         self.data.id.write_direct_chunk((0, 0, self.array_index), arr_data.tobytes())
         toc = time()
-        print(f"Time appending dataset: {toc-tic}")
         self.total_write_time += toc - tic
 
     def _extend_dataset(self):
         if self.array_index + 1 > self.data.shape[2]:
-            tic = time()
             self.data.resize(self.array_index + 1, axis=2)
-            toc = time()
-            print(f"Time take to extend: {toc - tic}")
-        else:
-            print("Resize not required")
 
     def _create_data_dataset(self, array):
         # Get the array dimensions and create the 'data' dataset
