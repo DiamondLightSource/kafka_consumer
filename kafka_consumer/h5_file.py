@@ -1,5 +1,6 @@
 from pathlib import Path
 from time import time
+from typing import Optional
 
 from h5py import File
 
@@ -42,10 +43,26 @@ class MismatchedDataype(Exception):
 
 
 class H5File:
+    """Handle de-serialization of arrays and writing of datasets"""
+
     def __init__(self):
         self.total_write_time = 0
 
-    def create(self, filepath, filename, num_arrays, first_array_id=None):
+    def create(
+        self,
+        filepath: Path,
+        filename: str,
+        num_arrays: int,
+        first_array_id: Optional[int] = None,
+    ):
+        """Create h5file and set up groups
+
+        Args:
+            filepath: Path to h5file
+            filename: Name of h5file
+            num_arrays: Number of arrays to write to file
+            first_array_id: ID of first NDArray to write
+        """
         self.f = File(Path(filepath) / filename, "w", libver="latest")
         self.f.create_group(DATA_LINK_PATH)
         self.f.create_group(DATA_PATH)
@@ -55,13 +72,14 @@ class H5File:
         self.array_count = 0
         self.data_dtype = None
         self.data_dims = None
+        self.array_offset = first_array_id
 
-        if first_array_id is not None:
-            self.array_offset = first_array_id
-        else:
-            self.array_offset = None
+    def add_array_from_flatbuffer(self, flatbuffer_array: bytes):
+        """Deserialize flabbuffer and write array data to dataset
 
-    def add_array_from_flatbuffer(self, flatbuffer_array):
+        Args:
+            flatbuffer_array: FlatBuffer serialized NDArray
+        """
         array = array_from_flatbuffer(flatbuffer_array)
 
         is_valid = self._check_array_id_and_increment_index(array)

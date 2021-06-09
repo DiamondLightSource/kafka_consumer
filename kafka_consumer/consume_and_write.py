@@ -1,5 +1,7 @@
 import sys
+from pathlib import Path
 from time import time
+from typing import List, Optional
 
 from confluent_kafka import Consumer, KafkaException, TopicPartition
 
@@ -9,7 +11,15 @@ from kafka_consumer.utils import array_from_flatbuffer
 
 
 class KafkaConsumer:
-    def __init__(self, broker, group, topic):
+    """Consume serialized NDArrays from kafka and write to h5file
+
+    Args:
+        broker: Broker name
+        group: Consumer group ID
+        topic: Topic name
+    """
+
+    def __init__(self, broker: str, group: str, topic: str):
         self.broker = broker
         self.group = group
         self.topic = topic
@@ -53,19 +63,22 @@ class KafkaConsumer:
 
     def consume_and_write(
         self,
-        filepath,
-        filename,
-        num_arrays,
-        start_offsets=None,
-        secs_since_epoch=None,
-        first_array_id=None,
+        filepath: Path,
+        filename: str,
+        num_arrays: int,
+        start_offsets: Optional[List[int]] = None,
+        secs_since_epoch: Optional[int] = None,
+        first_array_id: Optional[int] = None,
     ):
-        """Simple kafka consumer
+        """Consume serialized NDArrays from kafka and write to h5file
 
         Args:
-            filepath:
-            filename:
-            num_arrays:
+            filepath: Path to h5file
+            filename: Name of h5file
+            num_arrays: Number of arrays to write to file
+            start_offsets: First offset to consume from each partition
+            secs_since_epoch: Starting array timestamp (unix epoch time) to consume from
+            first_array_id: ID of first NDArray to write
         """
 
         if start_offsets and secs_since_epoch:
