@@ -18,6 +18,7 @@ class KafkaConsumer:
 
         # Consumer configuration
         # See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+        # Add "debug": "consumer,cgrp,topic,fetch", for debug info from kafka
         self.conf = {
             "bootstrap.servers": broker,
             "group.id": group,
@@ -74,7 +75,7 @@ class KafkaConsumer:
 
         if start_offsets and len(start_offsets) != self.num_partitions:
             raise ValueError(
-                "Length of provided offsets not equalt to number of partitions in topic"
+                "Length of provided offsets not equal to number of partitions in topic"
             )
 
         c = Consumer(self.conf)
