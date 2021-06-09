@@ -126,6 +126,7 @@ class KafkaConsumer:
         h5file.create(filepath, filename, num_arrays, first_array_id)
 
         try:
+            unassigned = 0
             while h5file.array_count < num_arrays:
                 msg = c.poll(timeout=1.0)
                 if msg is None:
@@ -143,9 +144,17 @@ class KafkaConsumer:
                     valid_array = h5file.add_array_from_flatbuffer(msg.value())
                     if not valid_array:
                         log.debug(f"Unassigning partition id {msg.partition()}")
+                        unassigned += 1
                         c.incremental_unassign(
                             [TopicPartition(self.topic, msg.partition())]
                         )
+                        if unassigned == self.num_partitions:
+                            log.warning(
+                                f"{num_arrays - h5file.array_count} Frames missing from kafka"
+                            )
+                            break
+                    log.debug(f"Num written is {h5file.array_count}")
+                    log.debug(f"Number of unassigned partitions {unassigned}")
 
         except KeyboardInterrupt:
             sys.stderr.write("%% Aborted by user\n")

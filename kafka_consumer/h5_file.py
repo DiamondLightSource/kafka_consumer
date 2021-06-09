@@ -100,6 +100,8 @@ class H5File:
         if self.array_offset is not None:
             if self.array_offset <= array.Id() < self.array_offset + self.num_arrays:
                 log.debug(f"Received array with valid ID: {array.Id()}")
+                log.debug(f"Range: "
+                    f"{self.array_offset} - {self.array_offset + self.num_arrays -1}")
                 self.array_index = array.Id() - self.array_offset
             else:
                 log.debug(
