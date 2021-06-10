@@ -54,7 +54,15 @@ class KafkaConsumer:
             if topic_partition_offset.offset == -1:
                 # No msgs after this timestamp for this offset
                 break
-            msg = consumer.consume()[0]
+            try:
+                while True:
+                    msg_list = consumer.consume(timeout=1.0)
+                    if msg_list:
+                        msg = msg_list[0]
+                        break
+            except KeyboardInterrupt:
+                log.error("User aborted whilst waiting for array")
+                raise
             array_id = array_from_flatbuffer(msg.value()).Id()
             if not min_array_id:
                 min_array_id = array_id
