@@ -56,7 +56,7 @@ class KafkaConsumer:
                 break
             try:
                 while True:
-                    msg_list = consumer.consume(timeout=1.0)
+                    msg_list = consumer.consume(1, timeout=1.0)
                     if msg_list:
                         msg = msg_list[0]
                         break
@@ -158,7 +158,8 @@ class KafkaConsumer:
                         )
                         if unassigned == self.num_partitions:
                             log.warning(
-                                f"{num_arrays - h5file.array_count} Frames missing from kafka"
+                                f"{num_arrays - h5file.array_count} "
+                                "Frames missing from kafka"
                             )
                             break
                     log.debug(f"Num written is {h5file.array_count}")
