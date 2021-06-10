@@ -10,7 +10,7 @@ from kafka_consumer import KafkaConsumer, __version__
 def main(args=None):
     parser = ArgumentParser()
     parser.add_argument("--version", action="version", version=__version__)
-    parser.add_argument("broker", type=str, help="Broker")
+    parser.add_argument("brokers", type=str, help="List of brokers", nargs="+")
     parser.add_argument("group", type=str, help="Group")
     parser.add_argument("topic", type=str, help="Topic")
     group = parser.add_mutually_exclusive_group()
@@ -59,7 +59,7 @@ def main(args=None):
 
     args = parser.parse_args(args)
     logging.basicConfig(level=getattr(logging, args.log_level.upper()))
-    kafka_consumer = KafkaConsumer(args.broker, args.group, args.topic)
+    kafka_consumer = KafkaConsumer(args.brokers, args.group, args.topic)
     kafka_consumer.consume_and_write(
         args.directory,
         args.filename,

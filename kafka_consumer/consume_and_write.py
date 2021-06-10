@@ -16,23 +16,23 @@ class KafkaConsumer:
     """Consume serialized NDArrays from kafka and write to h5file
 
     Args:
-        broker: Broker name
+        brokers: List of broker names
         group: Consumer group ID
         topic: Topic name
     """
 
-    def __init__(self, broker: str, group: str, topic: str):
-        self.broker = broker
+    def __init__(self, brokers: List[str], group: str, topic: str):
+        self.brokers = brokers
         self.group = group
         self.topic = topic
-        topic_metadata = get_topic_metadata(broker, topic)
+        topic_metadata = get_topic_metadata(brokers, topic)
         self.num_partitions = len(topic_metadata.partitions)
 
         # Consumer configuration
         # See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
         # Add "debug": "consumer,cgrp,topic,fetch", for debug info from kafka
         self.conf = {
-            "bootstrap.servers": broker,
+            "bootstrap.servers": ",".join(brokers),
             "group.id": group,
             "session.timeout.ms": 6000,
             "auto.offset.reset": "earliest",
