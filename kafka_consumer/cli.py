@@ -2,6 +2,7 @@ import cProfile
 import logging
 import pstats
 from argparse import ArgumentParser
+from pathlib import Path
 
 from kafka_consumer import KafkaConsumer, __version__
 
@@ -32,6 +33,23 @@ def main(args=None):
         "-i", "--array_id", type=int, help="ID of first array to write", required=False
     )
     parser.add_argument(
+        "-d",
+        "--directory",
+        type=Path,
+        default=Path.cwd(),
+        help="Output file directory, default is cwd",
+    )
+    parser.add_argument(
+        "-f",
+        "--filename",
+        type=str,
+        default="data.h5",
+        help="Name of output file, default is data.h5",
+    )
+    parser.add_argument(
+        "-n", "--num_arrays", type=int, default=100, help="Number of arrays to write",
+    )
+    parser.add_argument(
         "--log_level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="WARNING",
@@ -43,9 +61,9 @@ def main(args=None):
     logging.basicConfig(level=getattr(logging, args.log_level.upper()))
     kafka_consumer = KafkaConsumer(args.broker, args.group, args.topic)
     kafka_consumer.consume_and_write(
-        "/dls/science/users/wqt58532/kafka_consumer",
-        "test_consume.h5",
-        100,
+        args.directory,
+        args.filename,
+        args.num_arrays,
         start_offsets=args.offsets,
         secs_since_epoch=args.timestamp,
         first_array_id=args.array_id,
