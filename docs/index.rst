@@ -51,14 +51,12 @@ About the documentation
     :name: how-to
     :maxdepth: 1
 
-    how-to/accomplish-a-task
+    how-to/compile-fb-schema
 
 .. toctree::
     :caption: Explanations
     :name: explanations
     :maxdepth: 1
-
-    explanations/why-is-something-so
 
 .. rst-class:: no-margin-after-ul
 
@@ -67,7 +65,6 @@ About the documentation
     :name: reference
     :maxdepth: 1
 
-    reference/api
     reference/contributing
 
 * :ref:`genindex`
