@@ -3,7 +3,7 @@ kafka_consumer
 
 |code_ci| |docs_ci| |coverage| |pypi_version| |license|
 
-Simple kafka consumer
+Kafka consumer to consume NDArrays produced by `ADPluginKafka <https://github.com/ess-dmsc/ad-kafka-interfaceNDArrays>`_  and write data to HDF5 file.
 
 ============== ==============================================================
 PyPI           ``pip install kafka_consumer``
@@ -11,13 +11,6 @@ Source code    https://github.com/dls-controls/kafka_consumer
 Documentation  https://dls-controls.github.io/kafka_consumer
 ============== ==============================================================
 
-To consume a given number of arrays and write to an HDF file:
-
-.. code:: python
-
-    from kafka_consumer import consume_and_write
-
-    consume_and_write(broker, group, topics, num_arrays)
 
 .. |code_ci| image:: https://github.com/dls-controls/kafka_consumer/workflows/Code%20CI/badge.svg?branch=master
     :target: https://github.com/dls-controls/kafka_consumer/actions?query=workflow%3A%22Code+CI%22
