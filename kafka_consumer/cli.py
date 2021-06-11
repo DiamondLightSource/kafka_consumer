@@ -1,10 +1,9 @@
-import cProfile
 import logging
-import pstats
 from argparse import ArgumentParser
 from pathlib import Path
 
 from kafka_consumer import KafkaConsumer, __version__
+from kafka_consumer.utils import profile
 
 
 def main(args=None):
@@ -56,26 +55,32 @@ def main(args=None):
         type=str,
         help="Log level",
     )
+    parser.add_argument(
+        "--prof_directory",
+        type=Path,
+        default=Path.cwd(),
+        help="Profiling results directory, default is cwd",
+    )
+    parser.add_argument(
+        "--prof_filename",
+        type=str,
+        default="profile_results",
+        help="Stem of profiling results filenaem, default is profile_results",
+    )
 
     args = parser.parse_args(args)
     logging.basicConfig(level=getattr(logging, args.log_level.upper()))
-    kafka_consumer = KafkaConsumer(args.brokers, args.group, args.topic)
-    kafka_consumer.consume_and_write(
-        args.directory,
-        args.filename,
-        args.num_arrays,
-        start_offsets=args.offsets,
-        secs_since_epoch=args.timestamp,
-        first_array_id=args.array_id,
-    )
 
+    @profile(args.prof_directory, args.prof_filename)
+    def main_inner(args):
+        kafka_consumer = KafkaConsumer(args.brokers, args.group, args.topic)
+        kafka_consumer.consume_and_write(
+            args.directory,
+            args.filename,
+            args.num_arrays,
+            start_offsets=args.offsets,
+            secs_since_epoch=args.timestamp,
+            first_array_id=args.array_id,
+        )
 
-if __name__ == "__main__":
-    prof = cProfile.Profile()
-    prof.run("main()")
-    prof.dump_stats("output.prof")
-
-    stream = open("output.txt", "w")
-    stats = pstats.Stats("output.prof", stream=stream)
-    stats.sort_stats("cumtime")
-    stats.print_stats()
+    main_inner(args)

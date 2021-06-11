@@ -1,3 +1,7 @@
+import cProfile
+import pstats
+from pathlib import Path
+
 from numpy import dtype
 
 from kafka_consumer.FB_Tables.NDArray import NDArray
@@ -21,3 +25,24 @@ def array_from_flatbuffer(buffer):
     array_buf = bytearray(buffer)
     array = NDArray.GetRootAs(array_buf, 0)
     return array
+
+
+def profile(directory, filename):
+    def profile_inner(func):
+        def wrapper_profile(*args, **kwargs):
+            pr = cProfile.Profile()
+            pr.enable()
+            func(*args, **kwargs)
+            pr.disable()
+
+            stats = pstats.Stats(pr)
+            pr.dump_stats(f"{Path(directory) / filename}.prof")
+
+            stream = open(f"{Path(directory) / filename}.txt", "w")
+            stats = pstats.Stats(f"{Path(directory) / filename}.prof", stream=stream)
+            stats.sort_stats("cumtime")
+            stats.print_stats()
+
+        return wrapper_profile
+
+    return profile_inner
