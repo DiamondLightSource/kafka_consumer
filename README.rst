@@ -12,15 +12,15 @@ Documentation  https://dls-controls.github.io/kafka_consumer
 ============== ==============================================================
 
 
-.. |code_ci| image:: https://github.com/dls-controls/kafka_consumer/workflows/Code%20CI/badge.svg?branch=master
+.. |code_ci| image:: https://github.com/dls-controls/kafka_consumer/workflows/Code%20CI/badge.svg?branch=main
     :target: https://github.com/dls-controls/kafka_consumer/actions?query=workflow%3A%22Code+CI%22
     :alt: Code CI
 
-.. |docs_ci| image:: https://github.com/dls-controls/kafka_consumer/workflows/Docs%20CI/badge.svg?branch=master
+.. |docs_ci| image:: https://github.com/dls-controls/kafka_consumer/workflows/Docs%20CI/badge.svg?branch=main
     :target: https://github.com/dls-controls/kafka_consumer/actions?query=workflow%3A%22Docs+CI%22
     :alt: Docs CI
 
-.. |coverage| image:: https://codecov.io/gh/dls-controls/kafka_consumer/branch/master/graph/badge.svg
+.. |coverage| image:: https://codecov.io/gh/dls-controls/kafka_consumer/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/dls-controls/kafka_consumer
     :alt: Test Coverage
 
