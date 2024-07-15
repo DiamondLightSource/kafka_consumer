@@ -7,21 +7,21 @@ Kafka consumer to consume NDArrays produced by `ADPluginKafka <https://github.co
 
 ============== ==============================================================
 PyPI           ``pip install kafka_consumer``
-Source code    https://github.com/dls-controls/kafka_consumer
-Documentation  https://dls-controls.github.io/kafka_consumer
+Source code    https://github.com/DiamondLightSource/kafka_consumer
+Documentation  https://DiamondLightSource.github.io/kafka_consumer
 ============== ==============================================================
 
 
-.. |code_ci| image:: https://github.com/dls-controls/kafka_consumer/workflows/Code%20CI/badge.svg?branch=main
-    :target: https://github.com/dls-controls/kafka_consumer/actions?query=workflow%3A%22Code+CI%22
+.. |code_ci| image:: https://github.com/DiamondLightSource/kafka_consumer/workflows/Code%20CI/badge.svg?branch=main
+    :target: https://github.com/DiamondLightSource/kafka_consumer/actions?query=workflow%3A%22Code+CI%22
     :alt: Code CI
 
-.. |docs_ci| image:: https://github.com/dls-controls/kafka_consumer/workflows/Docs%20CI/badge.svg?branch=main
-    :target: https://github.com/dls-controls/kafka_consumer/actions?query=workflow%3A%22Docs+CI%22
+.. |docs_ci| image:: https://github.com/DiamondLightSource/kafka_consumer/workflows/Docs%20CI/badge.svg?branch=main
+    :target: https://github.com/DiamondLightSource/kafka_consumer/actions?query=workflow%3A%22Docs+CI%22
     :alt: Docs CI
 
-.. |coverage| image:: https://codecov.io/gh/dls-controls/kafka_consumer/branch/main/graph/badge.svg
-    :target: https://codecov.io/gh/dls-controls/kafka_consumer
+.. |coverage| image:: https://codecov.io/gh/DiamondLightSource/kafka_consumer/branch/main/graph/badge.svg
+    :target: https://codecov.io/gh/DiamondLightSource/kafka_consumer
     :alt: Test Coverage
 
 .. |pypi_version| image:: https://img.shields.io/pypi/v/kafka_consumer.svg
@@ -36,4 +36,4 @@ Documentation  https://dls-controls.github.io/kafka_consumer
     Anything below this line is used when viewing README.rst and will be replaced
     when included in index.rst
 
-See https://dls-controls.github.io/kafka_consumer for more detailed documentation.
+See https://DiamondLightSource.github.io/kafka_consumer for more detailed documentation.
